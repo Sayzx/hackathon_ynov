@@ -1,0 +1,20 @@
+# Python dependencies for Phi-3.5-Financial Infrastructure deployment
+
+# Ansible automation
+ansible>=2.9.0
+ansible-core>=2.13.0
+
+# Docker integration
+docker>=5.0.0
+docker-compose>=1.29.0
+
+# Python utilities
+jinja2>=3.0.0
+pyyaml>=5.4.0
+
+# Optional but recommended
+requests>=2.28.0
+urllib3>=1.26.0
+
+# For Windows users (optional)
+pywinpty>=2.0.0; sys_platform == 'win32'
