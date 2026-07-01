@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phi-3.5 Financial - Chat Interface</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 800px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.error {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .settings {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .setting-group select {
+            padding: 6px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .setting-group select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: white;
+        }
+
+        .message {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            max-width: 70%;
+        }
+
+        .message.assistant .message-content {
+            max-width: 75%;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .message.user .message-time {
+            text-align: right;
+        }
+
+        .bubble {
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            font-size: 0.95rem;
+        }
+
+        .message.user .bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .bubble {
+            background: #f0f4f8;
+            color: #1e293b;
+            border-bottom-left-radius: 4px;
+        }
+
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #94a3b8;
+            animation: bounce 1.4s infinite;
+        }
+
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .input-container {
+            flex: 1;
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input:disabled {
+            background: #f1f5f9;
+            color: #cbd5e1;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+
+        .clear-btn {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+        }
+
+        .clear-btn:hover:not(:disabled) {
+            background: #cbd5e1;
+        }
+
+        .error-banner {
+            padding: 12px 16px;
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            #app {
+                max-height: 100vh;
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 1.2rem;
+            }
+
+            .settings {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .setting-group {
+                flex-direction: column;
+            }
+
+            .message-content {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header class="header">
+            <h1>💰 Phi-3.5 Financial Chat</h1>
+            <div class="status">
+                <div class="status-dot" :class="{ error: !isConnected }"></div>
+                <span>{{ isConnected ? 'Connecté' : 'Hors ligne' }}</span>
+            </div>
+        </header>
+
+        <div class="settings">
+            <div class="setting-group">
+                <label for="model-select">Modèle:</label>
+                <select id="model-select" v-model="selectedModel" :disabled="isLoading || models.length === 0">
+                    <option v-for="m in models" :key="m.name" :value="m.name">{{ m.name }}</option>
+                </select>
+            </div>
+            <button class="clear-btn" @click="clearChat" :disabled="isLoading">Effacer</button>
+        </div>
+
+        <div class="chat-box" ref="chatBox">
+            <div v-if="errorMessage" class="error-banner">
+                ⚠️ {{ errorMessage }}
+            </div>
+            <div v-for="(msg, index) in messages" :key="index" :class="['message', msg.role]">
+                <div class="message-content">
+                    <div class="bubble">{{ msg.text }}</div>
+                </div>
+            </div>
+            <div v-if="isLoading" class="message assistant">
+                <div class="message-content">
+                    <div class="bubble">
+                        <div class="loading-dots">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <input
+                    type="text"
+                    v-model="userInput"
+                    @keyup.enter="sendMessage"
+                    placeholder="Posez votre question financière..."
+                    :disabled="isLoading || !isConnected"
+                >
+            </div>
+            <button @click="sendMessage" :disabled="isLoading || !userInput.trim() || !isConnected">
+                Envoyer
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const API_BASE = 'http://localhost:5000';
+                const messages = ref([
+                    { role: 'assistant', text: 'Bonjour! Je suis Phi-3.5-Financial, votre assistant financier. Comment puis-je vous aider?' }
+                ]);
+                const userInput = ref('');
+                const isLoading = ref(false);
+                const isConnected = ref(false);
+                const selectedModel = ref('phi3.5');
+                const models = ref([]);
+                const errorMessage = ref('');
+                const chatBox = ref(null);
+
+                const scrollToBottom = () => {
+                    nextTick(() => {
+                        if (chatBox.value) {
+                            chatBox.value.scrollTop = chatBox.value.scrollHeight;
+                        }
+                    });
+                };
+
+                const checkConnection = async () => {
+                    try {
+                        const response = await fetch(`${API_BASE}/health`, { timeout: 5000 });
+                        isConnected.value = response.ok;
+                        if (response.ok) {
+                            errorMessage.value = '';
+                            loadModels();
+                        } else {
+                            errorMessage.value = 'Impossible de se connecter au serveur';
+                        }
+                    } catch (e) {
+                        isConnected.value = false;
+                        errorMessage.value = 'Serveur indisponible. Assurez-vous que server.py est lancé (python server.py)';
+                    }
+                };
+
+                const loadModels = async () => {
+                    try {
+                        const response = await fetch(`${API_BASE}/api/models`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            models.value = data.models || [];
+                            if (models.value.length > 0 && !models.value.find(m => m.name === selectedModel.value)) {
+                                selectedModel.value = models.value[0].name;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Erreur lors du chargement des modèles:', e);
+                    }
+                };
+
+                const sendMessage = async () => {
+                    if (!userInput.value.trim() || isLoading.value || !isConnected.value) return;
+
+                    const text = userInput.value.trim();
+                    messages.value.push({ role: 'user', text });
+                    userInput.value = '';
+                    isLoading.value = true;
+                    errorMessage.value = '';
+                    scrollToBottom();
+
+                    try {
+                        const response = await fetch(`${API_BASE}/api/generate`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                model: selectedModel.value,
+                                prompt: text,
+                                stream: true
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`Erreur ${response.status}`);
+                        }
+
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+                        let assistantMessage = { role: 'assistant', text: '' };
+                        messages.value.push(assistantMessage);
+
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+
+                            const chunk = decoder.decode(value);
+                            const lines = chunk.split('\n');
+
+                            for (const line of lines) {
+                                if (line.startsWith('data: ')) {
+                                    try {
+                                        const data = JSON.parse(line.slice(6));
+                                        assistantMessage.text += data.response || '';
+                                        scrollToBottom();
+                                    } catch (e) {
+                                        console.error('Erreur de parsing:', e);
+                                    }
+                                }
+                            }
+                        }
+
+                    } catch (error) {
+                        messages.value.push({
+                            role: 'assistant',
+                            text: '❌ Erreur: ' + error.message + '. Vérifiez que Ollama tourne sur localhost:11434 et que le serveur est lancé.'
+                        });
+                        errorMessage.value = error.message;
+                    } finally {
+                        isLoading.value = false;
+                        scrollToBottom();
+                    }
+                };
+
+                const clearChat = () => {
+                    messages.value = [
+                        { role: 'assistant', text: 'Bonjour! Je suis Phi-3.5-Financial, votre assistant financier. Comment puis-je vous aider?' }
+                    ];
+                };
+
+                checkConnection();
+                const connectionCheck = setInterval(checkConnection, 30000);
+
+                return {
+                    messages,
+                    userInput,
+                    isLoading,
+                    isConnected,
+                    selectedModel,
+                    models,
+                    errorMessage,
+                    chatBox,
+                    sendMessage,
+                    clearChat
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
