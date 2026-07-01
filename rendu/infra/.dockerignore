@@ -1,0 +1,69 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+documentation/
+
+# Development
+.env
+.env.local
+.env.*.local
+.venv
+venv/
+node_modules/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage/
+.tox/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Ansible
+ansible/
+*.yml
+*.yaml
+hosts
+inventory/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Other
+.env.example
+requirements.txt
+Makefile
+*.ps1
+*.sh
+setup-ollama.sh
+deploy-docker.sh
+health-check.sh
+test-api.sh
+init-model.sh
