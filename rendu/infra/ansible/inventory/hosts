@@ -1,0 +1,30 @@
+# Ansible Inventory for Phi-3.5-Financial Infrastructure
+
+[ollama]
+localhost ansible_connection=local
+
+[ollama:vars]
+# Project variables
+project_name=phi-financial
+project_dir=/opt/phi-financial
+
+# Docker variables
+docker_container_name=phi-financial-ollama
+
+# API variables
+api_url=http://localhost:11434
+api_port=11434
+
+# Model variables
+model_name=phi-financial
+model_base=phi3.5
+
+# Volume variables
+volume_name=ollama_data
+
+# Environment variables
+ollama_num_parallel=4
+ollama_num_thread=8
+
+# Ansible variables
+ansible_python_interpreter=/usr/bin/python3

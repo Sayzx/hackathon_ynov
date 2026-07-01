@@ -1,0 +1,140 @@
+---
+###############################################################################
+# 🚀 Phi-3.5-Financial Infrastructure Deployment Playbook
+# Purpose: Automate deployment of Ollama + Phi-3.5-Financial using Ansible
+# Requirements: Ansible 2.9+, Docker, Docker Compose
+###############################################################################
+
+- name: "Deploy Phi-3.5-Financial Infrastructure with Ollama"
+  hosts: "{{ target_hosts | default('localhost') }}"
+  become: "{{ ansible_become_enabled | default(false) }}"
+  gather_facts: yes
+
+  vars:
+    # Project configuration
+    project_name: "phi-financial"
+    project_dir: "/opt/phi-financial"
+    repo_url: "{{ repo_url | default('') }}"
+
+    # Docker configuration
+    docker_registry: "ollama"
+    docker_image: "ollama/ollama"
+    docker_image_tag: "latest"
+    docker_container_name: "phi-financial-ollama"
+
+    # Network configuration
+    api_port: 11434
+    api_host: "0.0.0.0"
+    api_url: "http://localhost:{{ api_port }}"
+
+    # Model configuration
+    model_name: "phi-financial"
+    model_base: "phi3.5"
+    model_timeout: 300
+
+    # Volume configuration
+    volume_name: "ollama_data"
+    volume_driver: "local"
+
+  pre_tasks:
+    - name: "Display deployment information"
+      debug:
+        msg: |
+          ╔════════════════════════════════════════════════════════════╗
+          ║    Phi-3.5-Financial Infrastructure Deployment Playbook    ║
+          ╚════════════════════════════════════════════════════════════╝
+
+          Target Host: {{ inventory_hostname }}
+          Project Name: {{ project_name }}
+          Project Directory: {{ project_dir }}
+          Model Name: {{ model_name }}
+          API Port: {{ api_port }}
+          Ansible Version: {{ ansible_version.full }}
+          Python Version: {{ ansible_python_version }}
+
+  roles:
+    - ollama
+
+  post_tasks:
+    - name: "Wait for API to be ready"
+      uri:
+        url: "{{ api_url }}/api/tags"
+        method: GET
+        status_code: 200
+      register: api_health
+      until: api_health.status == 200
+      retries: 30
+      delay: 2
+      ignore_errors: yes
+
+    - name: "Display deployment summary"
+      debug:
+        msg: |
+          ╔════════════════════════════════════════════════════════════╗
+          ║          ✅ DEPLOYMENT COMPLETE                           ║
+          ╚════════════════════════════════════════════════════════════╝
+
+          📊 Service Information:
+            • Project: {{ project_name }}
+            • Container: {{ docker_container_name }}
+            • Model: {{ model_name }}
+            • API URL: {{ api_url }}
+
+          📡 API Endpoints:
+            • Generate: POST {{ api_url }}/api/generate
+            • List Models: GET {{ api_url }}/api/tags
+            • Model Info: POST {{ api_url }}/api/show
+
+          🧪 Test Commands:
+            # Health check
+            curl {{ api_url }}/api/tags
+
+            # Generate response
+            curl -X POST {{ api_url }}/api/generate \\
+              -H "Content-Type: application/json" \\
+              -d '{
+                "model": "{{ model_name }}",
+                "prompt": "What is investment?",
+                "stream": false
+              }'
+
+          📚 Useful Commands:
+            # View logs
+            docker logs -f {{ docker_container_name }}
+
+            # Check container status
+            docker ps | grep {{ docker_container_name }}
+
+            # Access container shell
+            docker exec -it {{ docker_container_name }} /bin/bash
+
+            # Stop container
+            docker stop {{ docker_container_name }}
+
+            # Start container
+            docker start {{ docker_container_name }}
+
+          📝 Next Steps:
+            1. Verify API: curl {{ api_url }}/api/tags
+            2. Share endpoint with DEV WEB team
+            3. Monitor container logs
+            4. Run security tests (CYBER team)
+            5. Validate model quality (IA team)
+
+          📖 Documentation:
+            See: README.md and documentation/ directory
+
+      when: api_health.status == 200 or api_health.status is undefined
+
+    - name: "Display API health status"
+      debug:
+        msg: "✅ API is responding at {{ api_url }}"
+      when: api_health.status == 200
+
+    - name: "Warn if API not responding"
+      debug:
+        msg: |
+          ⚠️  API may still be initializing...
+          Check logs: docker logs -f {{ docker_container_name }}
+          Retry health check in a few moments
+      when: api_health.status != 200 and api_health.status is defined

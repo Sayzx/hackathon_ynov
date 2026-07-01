@@ -1,0 +1,15 @@
+---
+###############################################################################
+# Ollama Role - Handlers
+###############################################################################
+
+- name: "Restart Ollama container"
+  community.docker.docker_container:
+    name: "{{ docker_container_name }}"
+    state: restarted
+
+- name: "Reload Docker daemon"
+  systemd:
+    daemon_reload: yes
+  become: yes
+  when: ansible_service_mgr == "systemd"

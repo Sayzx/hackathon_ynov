@@ -1,0 +1,40 @@
+---
+###############################################################################
+# Ollama Role - Default Variables
+###############################################################################
+
+# Project settings
+project_name: "phi-financial"
+project_dir: "/opt/phi-financial"
+
+# Docker settings
+docker_registry: "ollama"
+docker_image: "ollama/ollama"
+docker_image_tag: "latest"
+docker_container_name: "phi-financial-ollama"
+
+# Network settings
+api_port: 11434
+api_host: "0.0.0.0"
+api_url: "http://localhost:11434"
+
+# Model settings
+model_name: "phi-financial"
+model_base: "phi3.5"
+model_timeout: 300
+
+# Volume settings
+volume_name: "ollama_data"
+volume_driver: "local"
+
+# Environment settings
+ollama_num_parallel: 4
+ollama_num_thread: 8
+
+# Restart policy
+restart_policy: "unless-stopped"
+
+# Logging
+log_driver: "json-file"
+log_max_size: "10m"
+log_max_file: "3"
